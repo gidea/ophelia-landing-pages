@@ -1,0 +1,189 @@
+/*
+ * Synapse material effects
+ * Liquid Glass controls: --lg-light, --lg-depth, --lg-frost, --lg-splay.
+ * Refraction and dispersion are configured in effects.js so the SVG filter
+ * can bend the real backdrop rather than only blurring it.
+ */
+
+.fx-liquid {
+  --lg-light: .14;
+  --lg-depth: 1;
+  --lg-frost: 3px;
+  --lg-splay: .28;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: rgba(255, 255, 255, var(--lg-light));
+  -webkit-backdrop-filter: blur(var(--lg-frost)) saturate(1.55);
+  backdrop-filter: url(#synapse-liquid-glass) blur(var(--lg-frost)) saturate(1.55) brightness(1.08);
+  box-shadow:
+    0 24px 70px rgba(0, 30, 24, calc(.22 * var(--lg-depth))),
+    0 4px 16px rgba(0, 30, 24, calc(.14 * var(--lg-depth))),
+    inset 0 1px 1px rgba(255, 255, 255, calc(.80 * var(--lg-depth))),
+    inset 0 -1px 1px rgba(255, 255, 255, calc(.28 * var(--lg-depth))),
+    inset 5px 9px 22px rgba(255, 255, 255, calc(.15 * var(--lg-depth))),
+    inset -6px -9px 24px rgba(16, 72, 62, calc(.10 * var(--lg-depth)));
+}
+
+.fx-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  padding: calc(1px + 1.15px * var(--lg-depth));
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(138deg,
+    rgba(255,255,255,.96), rgba(255,255,255,.18) 25%,
+    rgba(255,255,255,0) 44%, rgba(89,255,212,.20) 66%,
+    rgba(255,151,116,.30) 82%, rgba(255,255,255,.88));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+.fx-liquid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 84% at 22% -5%, rgba(255,255,255,.33), transparent 56%),
+    radial-gradient(72% 50% at 92% 106%, rgba(93,255,216,.14), transparent 62%),
+    linear-gradient(100deg, transparent 0 68%, rgba(255,132,105,.055) 75%, rgba(83,226,255,.08) 82%, transparent 92%);
+  mix-blend-mode: screen;
+}
+
+.fx-liquid > * { position: relative; z-index: 2; }
+
+.nav.fx-liquid {
+  --lg-light: .46;
+  --lg-depth: .75;
+  --lg-frost: 11px;
+  overflow: hidden;
+}
+
+.memory.fx-liquid {
+  --lg-light: .14;
+  --lg-depth: 1.25;
+  --lg-frost: 2px;
+}
+
+.feature-copy.fx-liquid,
+.step.fx-liquid {
+  --lg-light: .12;
+  --lg-depth: .9;
+  --lg-frost: 2px;
+}
+
+/* The base material is positioned relatively; image-card captions must
+   remain anchored overlays inside their cards. */
+.feature-copy.fx-liquid { position: absolute; }
+
+.feature--light .feature-copy.fx-liquid {
+  --lg-light: .44;
+  --lg-frost: 8px;
+  background: rgba(255,255,255,var(--lg-light));
+}
+
+.final-card.fx-liquid {
+  --lg-light: .13;
+  --lg-depth: 1.35;
+  --lg-frost: 4px;
+}
+
+.signup-card.fx-liquid {
+  --lg-light: .84;
+  --lg-depth: 1.15;
+  --lg-frost: 16px;
+  background: rgba(246,255,251,var(--lg-light));
+}
+
+.memory-cluster { position: relative; align-self: end; }
+.memory-cluster .memory { margin-bottom: 12px; }
+
+.metal-orb {
+  position: absolute;
+  z-index: 5;
+  top: -58px;
+  right: 30px;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: block;
+  overflow: hidden;
+  background: #d9e1de;
+  box-shadow:
+    0 20px 38px rgba(0,27,22,.30),
+    0 4px 12px rgba(0,27,22,.22),
+    inset 0 1px 1px rgba(255,255,255,.9),
+    0 0 0 1px rgba(255,255,255,.55);
+  transform: rotate(-7deg);
+  animation: metal-float 5.5s ease-in-out infinite;
+}
+
+.metal-orb::after {
+  content: "";
+  position: absolute;
+  inset: 5px 13px auto;
+  height: 25%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(rgba(255,255,255,.56), transparent);
+  filter: blur(3px);
+  mix-blend-mode: screen;
+}
+
+.chromatic-metal { width: 100%; height: 100%; display: block; border-radius: 50%; }
+
+.liquid-support {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  z-index: 3;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: rgba(255,255,255,.65);
+  background: rgba(2,32,26,.2);
+  border: 1px solid rgba(255,255,255,.16);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.liquid-support[data-active="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+  background: #8ff4d2;
+  box-shadow: 0 0 8px #8ff4d2;
+}
+
+.synapse-filter-defs { position: fixed; width: 0; height: 0; pointer-events: none; }
+
+@keyframes metal-float {
+  0%,100% { transform: translateY(0) rotate(-7deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@media (max-width: 900px) {
+  .memory-cluster { width: min(520px, 100%); }
+}
+
+@media (max-width: 600px) {
+  .metal-orb { width: 78px; height: 78px; top: -40px; right: 18px; }
+  .liquid-support { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metal-orb { animation: none; }
+}

@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#061c18">
+<meta name="description" content="Ophelia is the ophthalmology voice assistant that turns patient conversations into structured notes, so eye doctors can stay present.">
+<title>Ophelia — More eye contact, less screen time.</title>
+<link rel="icon" type="image/png" href="assets/ophelia-logo-web.png">
+<link rel="stylesheet" href="shared/switcher.css">
+<style>
+  :root {
+    --ink: #071f1b;
+    --ink-soft: #49625c;
+    --paper: #f4f8f5;
+    --mist: #e7f3ee;
+    --green: #0d6b50;
+    --green-deep: #063f34;
+    --aqua: #8ff4d2;
+    --coral: #ff8d6a;
+    --glass: rgba(247, 255, 252, .18);
+    --glass-strong: rgba(249, 255, 252, .64);
+    --line: rgba(255, 255, 255, .38);
+    --shadow: 0 24px 80px rgba(0, 33, 26, .22);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+  button, input { font: inherit; }
+  .wrap { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
+
+  .glass {
+    background: linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,.10));
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.48), inset 0 -1px 0 rgba(255,255,255,.08), var(--shadow);
+    -webkit-backdrop-filter: blur(24px) saturate(155%);
+    backdrop-filter: blur(24px) saturate(155%);
+  }
+
+  .nav-wrap { position: fixed; top: 18px; inset-inline: 0; z-index: 100; pointer-events: none; }
+  .nav {
+    pointer-events: auto; min-height: 60px; padding: 9px 10px 9px 18px;
+    border-radius: 999px; display: flex; align-items: center; justify-content: space-between; gap: 22px;
+    background: rgba(239, 250, 246, .50);
+    border: 1px solid rgba(255,255,255,.58);
+    box-shadow: 0 14px 46px rgba(5,31,25,.14), inset 0 1px 1px rgba(255,255,255,.72);
+    -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+    transition: background .25s ease, box-shadow .25s ease;
+  }
+  .nav.scrolled { background: rgba(242,250,247,.82); box-shadow: 0 12px 40px rgba(5,31,25,.18), inset 0 1px 1px #fff; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; color: #092b24; text-decoration: none; font-weight: 680; letter-spacing: -.025em; }
+  .brand-mark { width: 34px; height: 34px; display: block; flex: 0 0 auto; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(6,70,53,.22)); }
+  .nav-links { display: flex; align-items: center; gap: 28px; margin-left: auto; }
+  .nav-links a { color: rgba(7,31,27,.72); text-decoration: none; font-size: 14px; font-weight: 550; transition: color .2s ease; }
+  .nav-links a:hover { color: var(--green); }
+  .button {
+    border: 0; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    min-height: 44px; padding: 0 19px; border-radius: 999px; color: #fff; font-weight: 620; letter-spacing: -.01em;
+    background: linear-gradient(180deg,#137c5f,#075440); box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 10px 24px rgba(4,75,56,.24);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .button:hover { transform: translateY(-2px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 14px 30px rgba(4,75,56,.3); }
+  .button:active { transform: translateY(0); }
+  .button--light { color: #0a4034; background: rgba(255,255,255,.78); border: 1px solid rgba(255,255,255,.7); box-shadow: inset 0 1px 0 #fff, 0 10px 30px rgba(0,31,25,.16); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .button--ghost { color: #fff; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.38); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 10px 30px rgba(0,31,25,.12); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+
+  .hero { min-height: 920px; height: 100svh; position: relative; display: grid; align-items: end; isolation: isolate; overflow: hidden; background: #0c3f37; }
+  .hero-bg { position: absolute; inset: 0; z-index: -3; width: 100%; height: 100%; object-fit: cover; object-position: center; transform: scale(1.025); animation: breathe 16s ease-in-out infinite alternate; }
+  .hero::before { content: ""; position: absolute; inset: 0; z-index: -2; background: linear-gradient(90deg,rgba(1,20,17,.76) 0%,rgba(1,22,18,.40) 42%,rgba(1,24,20,.02) 72%),linear-gradient(0deg,rgba(2,30,24,.82) 0%,transparent 48%,rgba(2,24,20,.14) 100%); }
+  .hero::after { content: ""; position: absolute; z-index: -1; width: 560px; height: 560px; left: -140px; bottom: -120px; border-radius: 50%; background: rgba(67,236,184,.24); filter: blur(120px); }
+  @keyframes breathe { from { transform: scale(1.025); } to { transform: scale(1.075); } }
+  .hero-content { padding: 142px 0 58px; display: grid; grid-template-columns: minmax(0,1.12fr) minmax(340px,.72fr); align-items: end; gap: 70px; }
+  .hero-copy { color: #fff; padding-bottom: 18px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 24px; font-size: 13px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.82); }
+  .eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--aqua); box-shadow: 0 0 0 5px rgba(143,244,210,.16), 0 0 22px var(--aqua); }
+  h1 { margin: 0 0 24px; max-width: 820px; font-size: clamp(60px,8.1vw,112px); line-height: .89; letter-spacing: -.065em; font-weight: 680; text-wrap: balance; text-shadow: 0 3px 30px rgba(0,29,23,.22); }
+  h1 em { font-family: "Iowan Old Style", "Baskerville", Georgia, serif; font-weight: 400; letter-spacing: -.055em; }
+  .lede { max-width: 590px; margin: 0 0 32px; color: rgba(255,255,255,.78); font-size: clamp(18px,1.7vw,22px); line-height: 1.5; letter-spacing: -.012em; }
+  .cta-row { display: flex; gap: 11px; flex-wrap: wrap; }
+
+  .memory { align-self: end; margin-bottom: 12px; padding: 20px; border-radius: 30px; color: #fff; overflow: hidden; position: relative; }
+  .memory::before { content: ""; position: absolute; width: 180px; height: 180px; right: -60px; top: -90px; background: rgba(255,170,118,.28); border-radius: 50%; filter: blur(28px); }
+  .memory-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+  .memory-title { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 630; }
+  .memory-title span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px; background: rgba(255,255,255,.18); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+  .live { display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.67); font-size: 12px; }
+  .live i { width: 6px; height: 6px; border-radius: 50%; background: #94ffce; box-shadow: 0 0 12px #94ffce; }
+  .note { border-radius: 19px; padding: 19px; color: #123d34; background: rgba(246,255,251,.82); box-shadow: inset 0 1px 0 #fff, 0 12px 30px rgba(0,30,24,.11); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .note-top { display: flex; justify-content: space-between; gap: 16px; color: #6b817c; font-size: 12px; margin-bottom: 12px; }
+  .note h3 { margin: 0 0 9px; font-size: 20px; letter-spacing: -.03em; }
+  .note p { margin: 0; font-size: 14px; color: #45645d; line-height: 1.55; }
+  .connections { margin-top: 13px; display: flex; gap: 7px; flex-wrap: wrap; }
+  .connections span { padding: 6px 9px; border-radius: 99px; background: rgba(3,94,69,.08); color: #176b54; font-size: 11px; font-weight: 650; }
+  .memory-foot { margin-top: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,.66); }
+  .avatars { display: flex; }
+  .avatars i { width: 25px; height: 25px; margin-left: -7px; border: 2px solid rgba(255,255,255,.5); border-radius: 50%; background: linear-gradient(140deg,#ffcf9f,#9d583f); }
+  .avatars i:nth-child(2) { background: linear-gradient(140deg,#d4ffdc,#29745d); }
+  .avatars i:nth-child(3) { background: linear-gradient(140deg,#c5ddff,#4a62a0); }
+
+  .scroll-cue { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 7px; color: rgba(255,255,255,.68); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .scroll-cue i { width: 1px; height: 24px; background: linear-gradient(#fff,transparent); animation: scroll 1.8s ease-in-out infinite; }
+  @keyframes scroll { 0%,100%{transform:scaleY(.45);transform-origin:top;opacity:.45}50%{transform:scaleY(1);opacity:1} }
+
+  .manifesto { padding: 132px 0 110px; position: relative; overflow: hidden; background: linear-gradient(180deg,#f0f7f3,#fbfcfa); }
+  .manifesto::before { content: ""; position: absolute; width: 560px; height: 560px; right: -260px; top: -200px; border-radius: 50%; background: rgba(97,237,192,.23); filter: blur(80px); }
+  .section-label { color: var(--green); font-size: 13px; letter-spacing: .11em; text-transform: uppercase; font-weight: 700; }
+  .manifesto h2 { max-width: 970px; margin: 26px 0 58px; font-size: clamp(42px,6vw,76px); line-height: .99; letter-spacing: -.056em; font-weight: 620; }
+  .manifesto h2 span { color: #789089; }
+  .manifesto-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 80px; align-items: start; }
+  .metric { display: flex; align-items: baseline; gap: 10px; padding-top: 6px; }
+  .metric b { font-size: clamp(64px,8vw,112px); line-height: 1; letter-spacing: -.07em; font-weight: 620; color: var(--green-deep); }
+  .metric span { max-width: 190px; color: var(--ink-soft); font-size: 14px; line-height: 1.35; }
+  .story { columns: 2; column-gap: 38px; color: var(--ink-soft); font-size: 18px; line-height: 1.65; }
+  .story p { margin: 0 0 18px; break-inside: avoid; }
+  .story strong { color: var(--ink); font-weight: 620; }
+
+  .features { padding: 20px 0 120px; background: #fbfcfa; }
+  .feature-grid { display: grid; grid-template-columns: 1.04fr .96fr; grid-template-rows: 360px 360px; gap: 18px; }
+  .feature { position: relative; overflow: hidden; border-radius: 36px; color: #fff; isolation: isolate; min-height: 320px; }
+  .feature:first-child { grid-row: 1 / 3; }
+  .feature > img { position: absolute; inset: 0; z-index: -3; width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+  .feature:hover > img { transform: scale(1.045); }
+  .feature::before { content: ""; position: absolute; inset: 0; z-index: -2; background: linear-gradient(0deg,rgba(2,27,22,.78),rgba(2,27,22,.04) 66%); }
+  .feature--iris::before { background: linear-gradient(0deg,rgba(2,21,32,.82),rgba(2,21,32,.02) 72%); }
+  .feature--light { color: var(--ink); background: radial-gradient(circle at 85% 18%,#b7ffe1 0,transparent 34%),linear-gradient(145deg,#f5fbf6,#d9eee6); }
+  .feature--light::before { background: radial-gradient(circle at 76% 20%,rgba(255,255,255,.9),transparent 18%); }
+  .feature-copy { position: absolute; inset: auto 24px 24px; padding: 25px; border-radius: 25px; }
+  .feature:first-child .feature-copy { inset: auto 28px 28px; }
+  .feature-copy small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.65); margin-bottom: 9px; }
+  .feature-copy h3 { margin: 0 0 9px; font-size: clamp(25px,3vw,38px); line-height: 1.02; letter-spacing: -.045em; }
+  .feature-copy p { max-width: 500px; margin: 0; color: rgba(255,255,255,.72); font-size: 15px; }
+  .feature--light .feature-copy { top: 24px; bottom: 24px; display: flex; flex-direction: column; justify-content: space-between; color: var(--ink); background: rgba(255,255,255,.42); }
+  .feature--light .feature-copy small, .feature--light .feature-copy p { color: var(--ink-soft); }
+  .quote-mark { font: 400 92px/.7 Georgia,serif; color: var(--green); opacity: .58; }
+  .quote-attribution { display: flex; align-items: center; gap: 10px; margin-top: 15px; color: var(--ink-soft); font-size: 13px; }
+  .quote-attribution i { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(145deg,#ffcfac,#9d5f4c); box-shadow: inset 0 1px 1px rgba(255,255,255,.7); }
+
+  /* Desktop product */
+  .product { padding: 128px 0; background: linear-gradient(180deg,#edf6f2,#f9fbf9); overflow: hidden; }
+  .product-head { display: grid; grid-template-columns: 1.2fr .8fr; gap: 70px; align-items: end; margin-bottom: 58px; }
+  .product-head h2, .integration-copy h2, .privacy-head h2 { margin: 18px 0 0; font-size: clamp(40px,5vw,66px); line-height: .98; letter-spacing: -.052em; font-weight: 620; }
+  .product-head p { margin: 0; color: var(--ink-soft); font-size: 18px; max-width: 410px; }
+  .desktop { border-radius: 30px; overflow: hidden; background: rgba(249,253,251,.88); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 38px 90px -35px rgba(7,49,39,.35), inset 0 1px 0 #fff; }
+  .desktop-bar { height: 58px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 20px; color: #648078; background: rgba(255,255,255,.72); border-bottom: 1px solid #dce9e4; font-size: 12px; }
+  .window-dots { display: flex; gap: 7px; }
+  .window-dots i { width: 10px; height: 10px; border-radius: 50%; background: #c8d9d2; }
+  .window-dots i:first-child { background: #ff9b7f; }
+  .desktop-title { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 650; }
+  .desktop-title img { width: 23px; height: 23px; object-fit: contain; }
+  .sync-state { justify-self: end; display: flex; align-items: center; gap: 7px; }
+  .sync-state i { width: 6px; height: 6px; border-radius: 50%; background: #16a379; box-shadow: 0 0 0 4px rgba(22,163,121,.10); }
+  .desktop-body { min-height: 530px; display: grid; grid-template-columns: 190px .92fr 1.08fr; }
+  .app-side { padding: 22px 15px; border-right: 1px solid #dce9e4; background: rgba(237,246,242,.65); }
+  .app-side small { display: block; padding: 0 10px; margin: 0 0 9px; color: #8ba098; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .app-nav { list-style: none; margin: 0 0 25px; padding: 0; }
+  .app-nav li { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 10px; color: #607870; font-size: 13px; }
+  .app-nav li.active { color: #07503e; background: rgba(255,255,255,.86); box-shadow: 0 5px 15px rgba(5,60,45,.07), inset 0 0 0 1px rgba(13,107,80,.08); font-weight: 620; }
+  .patient-mini { margin-top: 150px; padding: 12px; border-radius: 13px; background: rgba(255,255,255,.7); border: 1px solid rgba(13,107,80,.08); }
+  .patient-mini b { display: block; margin-bottom: 3px; font-size: 12px; }
+  .patient-mini span { color: #789087; font-size: 10px; }
+  .transcript-pane, .soap-pane { padding: 25px; }
+  .transcript-pane { border-right: 1px solid #dce9e4; }
+  .pane-label { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; color: #6a827a; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .listening { padding: 16px; margin-bottom: 23px; border-radius: 16px; color: #fff; background: linear-gradient(130deg,#075642,#0f8c6a); box-shadow: 0 14px 30px rgba(5,91,68,.19); }
+  .listening-top { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+  .listening-top b { display: flex; align-items: center; gap: 7px; }
+  .listening-top b::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #9dffda; box-shadow: 0 0 10px #9dffda; }
+  .wave { height: 38px; margin-top: 12px; display: flex; align-items: center; gap: 3px; }
+  .wave i { flex: 1; max-width: 4px; height: var(--h,40%); border-radius: 5px; background: rgba(255,255,255,.68); transform-origin: center; animation: wave 1.25s ease-in-out infinite alternate; animation-delay: var(--d,0s); }
+  @keyframes wave { to { transform: scaleY(.42); opacity: .42; } }
+  .speech { display: grid; grid-template-columns: 28px 1fr; gap: 10px; margin-bottom: 17px; }
+  .speaker { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #dff3ec; color: #17674f; font-size: 10px; font-weight: 700; }
+  .speech.patient .speaker { background: #e8edf4; color: #526677; }
+  .speech p { margin: 2px 0 0; color: #516b63; font-size: 12px; line-height: 1.55; }
+  .speech mark { padding: 2px 3px; border-radius: 4px; color: #0a5c46; background: #dff6ed; }
+  .soap-pane { background: rgba(255,255,255,.46); }
+  .smart-pill { padding: 5px 9px; border-radius: 99px; color: #0d7558; background: #ddf5ec; font-size: 9px; letter-spacing: 0; text-transform: none; }
+  .soap-sections { display: grid; gap: 9px; }
+  .soap-block { padding: 13px 14px; border-radius: 13px; background: rgba(255,255,255,.86); border: 1px solid #e0ece7; box-shadow: 0 4px 12px rgba(7,55,43,.03); }
+  .soap-block b { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 5px; color: #124f40; font-size: 11px; }
+  .soap-block b span { color: #1b9a75; font-size: 9px; font-weight: 650; }
+  .soap-block p { margin: 0; color: #647b74; font-size: 10px; line-height: 1.5; }
+  .review-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; color: #70877f; font-size: 10px; }
+  .review-button { padding: 8px 11px; border-radius: 9px; color: #fff; background: #0b6b50; font-weight: 650; }
+
+  /* EHR connection */
+  .integration { padding: 128px 0; background: #fbfcfa; }
+  .integration-grid { display: grid; grid-template-columns: .78fr 1.22fr; gap: 80px; align-items: center; }
+  .integration-copy p { margin: 22px 0 0; color: var(--ink-soft); font-size: 18px; max-width: 470px; }
+  .integration-points { list-style: none; margin: 30px 0 0; padding: 0; display: grid; gap: 13px; }
+  .integration-points li { display: flex; gap: 11px; align-items: flex-start; color: #405e55; }
+  .integration-points i { width: 23px; height: 23px; flex: 0 0 23px; border-radius: 50%; display: grid; place-items: center; color: #087052; background: #def3eb; font-size: 11px; font-style: normal; }
+  .ehr-shell { padding: 18px; border-radius: 32px; background: linear-gradient(140deg,#dcefe7,#eef6f2); border: 1px solid #d1e5dd; box-shadow: 0 30px 70px -35px rgba(6,63,52,.34), inset 0 1px 0 #fff; }
+  .ehr-window { overflow: hidden; border-radius: 22px; background: rgba(255,255,255,.9); box-shadow: 0 10px 30px rgba(5,48,38,.09); }
+  .ehr-top { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid #e2ece8; color: #799087; font-size: 11px; }
+  .ehr-top b { color: #1b4b3f; }
+  .ehr-body { padding: 20px; }
+  .ehr-patient { display: flex; justify-content: space-between; gap: 18px; padding-bottom: 17px; border-bottom: 1px solid #e5eeea; }
+  .ehr-patient b { display: block; margin-bottom: 3px; font-size: 14px; }
+  .ehr-patient span { color: #799087; font-size: 11px; }
+  .ehr-badge { align-self: center; padding: 6px 9px; border-radius: 99px; color: #286b59; background: #e2f2ec; font-size: 10px; }
+  .handoff { display: grid; grid-template-columns: 1fr 42px 1fr; align-items: stretch; gap: 9px; margin: 18px 0; }
+  .handoff-card { min-height: 122px; padding: 14px; border-radius: 15px; border: 1px solid #ddeae5; background: #f8fbfa; }
+  .handoff-card img { width: 26px; height: 26px; object-fit: contain; margin-bottom: 18px; }
+  .handoff-card b { display: block; margin-bottom: 4px; color: #174d3e; font-size: 12px; }
+  .handoff-card span { color: #789087; font-size: 10px; }
+  .handoff-arrow { display: grid; place-items: center; color: #209b77; font-size: 21px; }
+  .ehr-rows { display: grid; gap: 7px; }
+  .ehr-row { display: grid; grid-template-columns: 90px 1fr auto; gap: 12px; align-items: center; padding: 9px 11px; border-radius: 10px; color: #6c837b; background: #f4f8f6; font-size: 10px; }
+  .ehr-row strong { color: #375b51; }
+  .ehr-row i { color: #15916d; font-style: normal; }
+
+  /* Privacy */
+  .privacy { padding: 128px 0; position: relative; overflow: hidden; color: #fff; background: #061f1a; }
+  .privacy::before { content: ""; position: absolute; width: 700px; height: 700px; right: -310px; top: -330px; border-radius: 50%; background: #147b66; filter: blur(150px); opacity: .5; }
+  .privacy-head { display: grid; grid-template-columns: 1.1fr .9fr; gap: 70px; align-items: end; margin-bottom: 55px; position: relative; }
+  .privacy-head p { margin: 0; max-width: 440px; color: rgba(255,255,255,.58); font-size: 18px; }
+  .privacy-grid { display: grid; grid-template-columns: 1.15fr .85fr .85fr; gap: 13px; position: relative; }
+  .privacy-card { min-height: 290px; padding: 28px; border-radius: 30px; display: flex; flex-direction: column; justify-content: space-between; }
+  .privacy-card:first-child { --lg-light:.16; }
+  .privacy-icon { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; color: #d5fff0; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.14); }
+  .privacy-icon svg { width: 24px; height: 24px; }
+  .privacy-card h3 { margin: 0 0 8px; font-size: 25px; letter-spacing: -.035em; }
+  .privacy-card p { margin: 0; color: rgba(255,255,255,.56); font-size: 14px; }
+  .eu-chip { align-self: flex-start; padding: 7px 10px; border-radius: 99px; color: #b8ffe5; background: rgba(86,217,190,.12); border: 1px solid rgba(143,244,210,.18); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+  .flow { padding: 128px 0; background: #061f1a; color: #fff; position: relative; overflow: hidden; }
+  .flow::before { content: ""; position: absolute; width: 700px; height: 700px; left: -320px; bottom: -420px; border-radius: 50%; background: #0d9470; filter: blur(140px); opacity: .45; }
+  .flow-head { display: flex; justify-content: space-between; gap: 40px; align-items: end; margin-bottom: 66px; }
+  .flow h2 { margin: 20px 0 0; max-width: 730px; font-size: clamp(42px,5vw,68px); line-height: .98; letter-spacing: -.055em; font-weight: 600; }
+  .flow-head p { max-width: 320px; margin: 0; color: rgba(255,255,255,.56); font-size: 17px; }
+  .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .step { min-height: 330px; padding: 28px; border-radius: 30px; position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+  .step::after { content: ""; position: absolute; width: 180px; height: 180px; right: -85px; bottom: -90px; border-radius: 50%; background: var(--glow,#8ff4d2); filter: blur(45px); opacity: .38; }
+  .step:nth-child(2) { --glow:#58bfff; }
+  .step:nth-child(3) { --glow:#ff926f; }
+  .step-num { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2); font-size: 13px; color: rgba(255,255,255,.72); }
+  .step h3 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.035em; }
+  .step p { margin: 0; color: rgba(255,255,255,.56); font-size: 15px; max-width: 30ch; }
+
+  .final { position: relative; min-height: 720px; display: grid; place-items: center; overflow: hidden; color: #fff; text-align: center; isolation: isolate; }
+  .final img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -3; }
+  .final::before { content: ""; position: absolute; inset: 0; z-index: -2; background: linear-gradient(rgba(2,29,23,.24),rgba(1,23,18,.76)); }
+  .final-card { width: min(760px,calc(100% - 40px)); padding: 58px 46px; border-radius: 42px; }
+  .final h2 { margin: 18px auto; font-size: clamp(44px,6vw,78px); line-height: .94; letter-spacing: -.06em; }
+  .final p { max-width: 520px; margin: 0 auto 30px; color: rgba(255,255,255,.72); font-size: 18px; }
+  .final .cta-row { justify-content: center; }
+
+  footer { padding: 32px 0 96px; background: #041813; color: rgba(255,255,255,.44); font-size: 13px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 22px; }
+  .foot .brand { color: rgba(255,255,255,.85); }
+  .foot-links { display: flex; gap: 24px; }
+  .foot-links a { text-decoration: none; }
+  .foot-links a:hover { color: #fff; }
+
+  .signup-panel { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 20px; background: rgba(0,23,18,.50); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+  .signup-panel.open { opacity: 1; pointer-events: auto; }
+  .signup-card { width: min(460px,100%); padding: 30px; border-radius: 32px; background: rgba(246,255,251,.88); border: 1px solid rgba(255,255,255,.76); box-shadow: 0 30px 100px rgba(0,30,24,.38), inset 0 1px 0 #fff; color: var(--ink); -webkit-backdrop-filter: blur(28px) saturate(160%); backdrop-filter: blur(28px) saturate(160%); transform: translateY(18px) scale(.97); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+  .signup-panel.open .signup-card { transform: none; }
+  .close { float: right; width: 38px; height: 38px; border: 0; border-radius: 50%; cursor: pointer; color: var(--ink); background: rgba(6,63,52,.08); font-size: 21px; }
+  .signup-card .brand-mark { margin-bottom: 24px; }
+  .signup-card h2 { margin: 0 0 10px; font-size: 34px; letter-spacing: -.045em; }
+  .signup-card p { color: var(--ink-soft); margin: 0 0 22px; }
+  .email-row { display: flex; padding: 5px; border-radius: 999px; background: rgba(255,255,255,.7); border: 1px solid rgba(6,63,52,.12); box-shadow: inset 0 1px 3px rgba(0,37,28,.06); }
+  .email-row input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0 14px; color: var(--ink); }
+  .success { display: none; padding: 18px; border-radius: 18px; color: #07513e; background: rgba(71,223,174,.16); font-weight: 620; }
+
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .hero { height: auto; min-height: 930px; }
+    .hero-content { grid-template-columns: 1fr; gap: 34px; padding-top: 150px; }
+    h1 { font-size: clamp(58px,13vw,92px); max-width: 700px; }
+    .memory { max-width: 520px; }
+    .scroll-cue { display: none; }
+    .manifesto-grid { grid-template-columns: 1fr; gap: 40px; }
+    .story { columns: 1; }
+    .feature-grid { grid-template-columns: 1fr; grid-template-rows: 620px 420px 420px; }
+    .feature:first-child { grid-row: auto; }
+    .product-head, .integration-grid, .privacy-head { grid-template-columns: 1fr; gap: 28px; }
+    .desktop-body { grid-template-columns: 150px 1fr; }
+    .soap-pane { grid-column: 1 / 3; border-top: 1px solid #dce9e4; }
+    .privacy-grid { grid-template-columns: 1fr; }
+    .privacy-card { min-height: 240px; }
+    .flow-head { align-items: start; flex-direction: column; }
+    .steps { grid-template-columns: 1fr; }
+    .step { min-height: 260px; }
+  }
+  @media (max-width: 600px) {
+    .wrap { width: min(100% - 24px,1180px); }
+    .nav-wrap { top: 10px; }
+    .nav { min-height: 54px; padding: 7px 7px 7px 14px; }
+    .nav .button { min-height: 40px; padding: 0 14px; font-size: 13px; }
+    .hero-content { padding: 120px 0 28px; }
+    h1 { font-size: clamp(51px,15.5vw,74px); }
+    .lede { font-size: 18px; }
+    .cta-row .button { flex: 1; min-width: 145px; }
+    .memory { border-radius: 25px; padding: 14px; }
+    .manifesto { padding: 86px 0 72px; }
+    .manifesto h2 { font-size: 43px; margin-bottom: 40px; }
+    .metric b { font-size: 78px; }
+    .feature-grid { grid-template-rows: 530px 380px 400px; }
+    .feature { border-radius: 28px; }
+    .feature-copy,.feature:first-child .feature-copy { inset-inline: 14px; bottom: 14px; padding: 20px; }
+    .feature--light .feature-copy { top: 14px; bottom: 14px; }
+    .product, .integration, .privacy { padding: 86px 0; }
+    .desktop-body { grid-template-columns: 1fr; }
+    .app-side { display: none; }
+    .transcript-pane { border-right: 0; }
+    .soap-pane { grid-column: auto; }
+    .handoff { grid-template-columns: 1fr; }
+    .handoff-arrow { transform: rotate(90deg); min-height: 30px; }
+    .ehr-row { grid-template-columns: 76px 1fr; }
+    .ehr-row i { display: none; }
+    .desktop-bar { grid-template-columns: 1fr auto; }
+    .sync-state { display: none; }
+    .flow { padding: 86px 0; }
+    .flow h2 { font-size: 46px; }
+    .final-card { padding: 42px 22px; border-radius: 30px; }
+    .final h2 { font-size: 50px; }
+    .foot { flex-direction: column; align-items: flex-start; }
+    .email-row { border-radius: 22px; flex-direction: column; padding: 7px; gap: 7px; }
+    .email-row input { min-height: 46px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *,*::before,*::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+<link rel="stylesheet" href="shared/effects.css">
+</head>
+<body>
+
+<div class="nav-wrap">
+  <nav class="nav wrap fx-liquid" aria-label="Primary navigation">
+    <a class="brand" href="#top" aria-label="Ophelia home"><img class="brand-mark" src="assets/ophelia-logo-web.png" alt="">Ophelia</a>
+    <div class="nav-links">
+      <a href="#product">Product</a>
+      <a href="#integration">EHR integration</a>
+      <a href="#privacy">Privacy</a>
+    </div>
+    <button class="button js-signup" type="button">Book a demo <span aria-hidden="true">↗</span></button>
+  </nav>
+</div>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <img class="hero-bg" src="assets/ophelia-hero.jpg" alt="An ophthalmologist giving an older patient his full attention during a consultation">
+    <div class="hero-content wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><i aria-hidden="true"></i> Voice assistant for ophthalmology</div>
+        <h1 id="hero-title">More eye contact, <em>less screen time.</em></h1>
+        <p class="lede">Ophelia listens during the consultation and turns the conversation into a structured clinical note—so you can stay with the patient.</p>
+        <div class="cta-row">
+          <button class="button button--light js-signup" type="button">Meet Ophelia <span aria-hidden="true">→</span></button>
+          <a class="button button--ghost" href="#how">See how it works</a>
+        </div>
+      </div>
+
+      <div class="memory-cluster">
+        <aside class="memory glass fx-liquid" aria-label="Ophelia clinical note preview">
+          <div class="memory-head">
+            <div class="memory-title"><span aria-hidden="true">✦</span> Ophelia is listening</div>
+            <div class="live"><i aria-hidden="true"></i> Secure session</div>
+          </div>
+          <article class="note">
+            <div class="note-top"><span>DRAFT · FOR REVIEW</span><span>Visit 08:40</span></div>
+            <h3>Glaucoma follow-up</h3>
+            <p>Vision stable. IOP 16 / 15 mmHg. Continue current drops. Review planned in six months.</p>
+            <div class="connections"><span>History</span><span>Measurements</span><span>Plan</span></div>
+          </article>
+          <div class="memory-foot"><span>Structured as you speak</span><span>Ready to approve ✓</span></div>
+        </aside>
+      </div>
+    </div>
+    <a class="scroll-cue" href="#philosophy"><span>Explore</span><i aria-hidden="true"></i></a>
+  </section>
+
+  <section class="manifesto" id="philosophy">
+    <div class="wrap">
+      <div class="section-label">More patient. Less admin.</div>
+      <h2>The best part of the appointment happens face to face. <span>Ophelia keeps it that way.</span></h2>
+      <div class="manifesto-grid">
+        <div class="metric"><b>3×</b><span>more accurate for ophthalmology than general-purpose voice tools</span></div>
+        <div class="story">
+          <p><strong>You talk with the patient. Ophelia quietly follows along.</strong> It understands the language, rhythm, and structure of an eye consultation.</p>
+          <p>A clear clinical note, follow-up plan, and relevant coding suggestions take shape while the conversation is still happening.</p>
+          <p>You stay in control. Review, edit, and approve everything before it moves into the patient record.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="experience" aria-label="The Ophelia experience">
+    <div class="wrap feature-grid">
+      <article class="feature">
+        <img src="assets/ophelia-exam.jpg" loading="lazy" alt="An ophthalmologist performing a calm slit-lamp eye examination">
+        <div class="feature-copy glass fx-liquid">
+          <small>Stay present</small>
+          <h3>The patient gets your attention.<br>Ophelia gets the notes.</h3>
+          <p>Speak naturally through the appointment. There is no dictation mode and no second conversation with the computer.</p>
+        </div>
+      </article>
+
+      <article class="feature feature--iris">
+        <img src="assets/ophelia-iris.jpg" loading="lazy" alt="Detailed blue-green and amber human iris">
+        <div class="feature-copy glass fx-liquid">
+          <small>Made for ophthalmology</small>
+          <h3>Not generic dictation.</h3>
+          <p>Dedicated medical AI understands the details of an eye consultation and places them where they belong.</p>
+        </div>
+      </article>
+
+      <article class="feature feature--light">
+        <div class="feature-copy glass fx-liquid">
+          <div class="quote-mark" aria-hidden="true">30%</div>
+          <div>
+            <h3>More of each visit for the person in front of you.</h3>
+            <div class="quote-attribution"><span>Time Ophelia can help give back in a typical ophthalmology workflow.</span></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="product" id="product">
+    <div class="wrap">
+      <div class="product-head">
+        <div>
+          <div class="section-label">The desktop app</div>
+          <h2>A quiet window that does the busy work.</h2>
+        </div>
+        <p>Start the consultation and speak as you normally would. Ophelia listens, identifies the clinical detail, and prepares the note beside the conversation.</p>
+      </div>
+
+      <div class="desktop" aria-label="Ophelia desktop app preview">
+        <div class="desktop-bar">
+          <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="desktop-title"><img src="assets/ophelia-logo-web.png" alt="">Ophelia</div>
+          <div class="sync-state"><i aria-hidden="true"></i> EHR connected</div>
+        </div>
+        <div class="desktop-body">
+          <aside class="app-side">
+            <small>Workspace</small>
+            <ul class="app-nav">
+              <li class="active"><span aria-hidden="true">◉</span> Consultation</li>
+              <li><span aria-hidden="true">□</span> Notes</li>
+              <li><span aria-hidden="true">⇄</span> EHR handoff</li>
+            </ul>
+            <small>Today</small>
+            <ul class="app-nav">
+              <li>08:40 · Follow-up</li>
+              <li>09:00 · New patient</li>
+              <li>09:20 · Post-op</li>
+            </ul>
+            <div class="patient-mini"><b>Patient 0082</b><span>Glaucoma follow-up<br>Consultation in progress</span></div>
+          </aside>
+
+          <div class="transcript-pane">
+            <div class="pane-label"><span>Live consultation</span><span>08:42</span></div>
+            <div class="listening">
+              <div class="listening-top"><b>Listening</b><span>02:14</span></div>
+              <div class="wave" aria-hidden="true">
+                <i style="--h:42%;--d:-.1s"></i><i style="--h:76%;--d:-.5s"></i><i style="--h:35%;--d:-.9s"></i><i style="--h:94%;--d:-.2s"></i><i style="--h:58%;--d:-.7s"></i><i style="--h:82%;--d:-.4s"></i><i style="--h:48%;--d:-1s"></i><i style="--h:70%;--d:-.3s"></i><i style="--h:92%;--d:-.8s"></i><i style="--h:38%;--d:-.6s"></i><i style="--h:65%;--d:-.1s"></i><i style="--h:84%;--d:-.5s"></i><i style="--h:44%;--d:-.9s"></i><i style="--h:73%;--d:-.2s"></i><i style="--h:55%;--d:-.7s"></i><i style="--h:88%;--d:-.4s"></i><i style="--h:36%;--d:-1s"></i><i style="--h:68%;--d:-.3s"></i>
+              </div>
+            </div>
+            <div class="speech"><div class="speaker">DR</div><p>How has your vision been since the last visit?</p></div>
+            <div class="speech patient"><div class="speaker">PT</div><p>It feels stable. I have been using the drops <mark>every evening</mark>.</p></div>
+            <div class="speech"><div class="speaker">DR</div><p>Good. The pressure is <mark>16 in the right eye and 15 in the left</mark>.</p></div>
+          </div>
+
+          <div class="soap-pane">
+            <div class="pane-label"><span>Extended SOAP note</span><span class="smart-pill">5 sections identified</span></div>
+            <div class="soap-sections">
+              <div class="soap-block"><b>Subjective <span>Complete ✓</span></b><p>Vision reported as stable. Adherent to evening eye drops.</p></div>
+              <div class="soap-block"><b>Objective <span>Updated now</span></b><p>IOP: OD 16 mmHg · OS 15 mmHg. Visual acuity unchanged.</p></div>
+              <div class="soap-block"><b>Assessment <span>Suggested</span></b><p>Stable glaucoma follow-up. No new symptoms reported.</p></div>
+              <div class="soap-block"><b>Plan <span>Draft</span></b><p>Continue current treatment. Review interval: six months.</p></div>
+              <div class="soap-block"><b>Codes &amp; actions <span>2 found</span></b><p>Diagnosis and service code suggestions ready for review.</p></div>
+            </div>
+            <div class="review-row"><span>Nothing leaves Ophelia before you approve it.</span><span class="review-button">Review note →</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="privacy" id="privacy">
+    <div class="wrap">
+      <div class="privacy-head">
+        <div><div class="section-label" style="color:#8ff4d2">Privacy by design</div><h2>Clinical data stays close to home.</h2></div>
+        <p>Ophelia is designed for European healthcare from the start, with EU hosting, controlled access, and a clear record of every action.</p>
+      </div>
+      <div class="privacy-grid">
+        <article class="privacy-card glass fx-liquid">
+          <div class="eu-chip">Hosted in the EU</div>
+          <div><h3>European data residency</h3><p>Patient information is processed and stored within the EU, with safeguards designed for GDPR-compliant clinical use.</p></div>
+        </article>
+        <article class="privacy-card glass fx-liquid">
+          <div class="privacy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          </div>
+          <div><h3>You stay in control</h3><p>Every note remains a draft until the clinician reviews and approves it.</p></div>
+        </article>
+        <article class="privacy-card glass fx-liquid">
+          <div class="privacy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          </div>
+          <div><h3>Clear traceability</h3><p>Changes, approvals, and handoffs stay visible—without adding work to the visit.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="integration" id="integration">
+    <div class="wrap integration-grid">
+      <div class="integration-copy">
+        <div class="section-label">Fits your clinic</div>
+        <h2>From conversation to EHR, without the copy-paste.</h2>
+        <p>Ophelia works alongside the patient record you already use. Review once, approve, and send each detail to its proper place.</p>
+        <ul class="integration-points">
+          <li><i>✓</i><span>Structured fields instead of one long transcript</span></li>
+          <li><i>✓</i><span>Draft referrals, prescriptions, and coding suggestions</span></li>
+          <li><i>✓</i><span>A clinician approval step before every handoff</span></li>
+        </ul>
+      </div>
+      <div class="ehr-shell">
+        <div class="ehr-window" aria-label="Electronic health record integration preview">
+          <div class="ehr-top"><b>Patient record</b><span>Connected securely</span></div>
+          <div class="ehr-body">
+            <div class="ehr-patient"><div><b>Glaucoma follow-up</b><span>Patient 0082 · Today, 08:40</span></div><div class="ehr-badge">Ready for handoff</div></div>
+            <div class="handoff">
+              <div class="handoff-card"><img src="assets/ophelia-logo-web.png" alt=""><b>Ophelia</b><span>Extended SOAP note reviewed and approved</span></div>
+              <div class="handoff-arrow" aria-hidden="true">→</div>
+              <div class="handoff-card"><div class="privacy-icon" style="width:26px;height:26px;margin-bottom:18px;color:#18614e;background:#e3f2ed"><span style="font-size:12px">EHR</span></div><b>Your patient record</b><span>Fields placed in the clinic’s existing template</span></div>
+            </div>
+            <div class="ehr-rows">
+              <div class="ehr-row"><span>Clinical note</span><strong>Updated</strong><i>Synced ✓</i></div>
+              <div class="ehr-row"><span>Diagnosis</span><strong>Reviewed code</strong><i>Synced ✓</i></div>
+              <div class="ehr-row"><span>Follow-up</span><strong>6 months</strong><i>Synced ✓</i></div>
+              <div class="ehr-row"><span>Prescription</span><strong>Continue current</strong><i>Synced ✓</i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="flow" id="how">
+    <div class="wrap">
+      <div class="flow-head">
+        <div><div class="section-label" style="color:#8ff4d2">Simple from day one</div><h2>Speak naturally. Review once. Move on.</h2></div>
+        <p>Ophelia fits around the way you already see patients, with a light onboarding and a clear approval step.</p>
+      </div>
+      <div class="steps">
+        <article class="step glass fx-liquid"><div class="step-num">01</div><div><h3>Listen</h3><p>Ophelia follows the patient conversation without getting between you.</p></div></article>
+        <article class="step glass fx-liquid"><div class="step-num">02</div><div><h3>Structure</h3><p>Clinical details become a clear note, plan, and draft actions in real time.</p></div></article>
+        <article class="step glass fx-liquid"><div class="step-num">03</div><div><h3>Approve</h3><p>You review the result, make any changes, and sign off when it feels right.</p></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <img src="assets/ophelia-hero.jpg" loading="lazy" alt="An eye doctor in conversation with a patient">
+    <div class="final-card glass fx-liquid">
+      <div class="eyebrow"><i aria-hidden="true"></i> Meet Ophelia</div>
+      <h2>Make room for one more human moment.</h2>
+      <p>Built for eye doctors, designed to work alongside the systems your clinic already uses.</p>
+      <div class="cta-row">
+        <button class="button button--light js-signup" type="button">Book a conversation <span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="#top"><img class="brand-mark" src="assets/ophelia-logo-web.png" alt="">Ophelia</a>
+    <span>© 2026 Ophelia. Made in Denmark for better eye care.</span>
+    <nav class="foot-links" aria-label="Footer navigation"><a href="#product">Product</a><a href="#integration">EHR integration</a><a href="#privacy">Privacy</a><a class="js-signup" href="#signup">Contact</a></nav>
+  </div>
+</footer>
+
+<div class="signup-panel" id="signup" role="dialog" aria-modal="true" aria-labelledby="signup-title" aria-hidden="true">
+  <div class="signup-card fx-liquid">
+    <button class="close" type="button" aria-label="Close signup">×</button>
+    <img class="brand-mark" src="assets/ophelia-logo-web.png" alt="">
+    <h2 id="signup-title">Bring Ophelia into the room.</h2>
+    <p>Leave your work email and we’ll set up a short, no-pressure introduction.</p>
+    <form id="signup-form">
+      <div class="email-row"><input type="email" aria-label="Work email address" placeholder="work@email.com" required><button class="button" type="submit">Book a demo</button></div>
+    </form>
+    <div class="success" id="success" role="status">Thank you—we’ll find a good time to talk.</div>
+  </div>
+</div>
+
+<script src="shared/switcher.js"></script>
+<script src="shared/effects.js"></script>
+<script>
+  const nav = document.querySelector('.nav');
+  const panel = document.getElementById('signup');
+  const form = document.getElementById('signup-form');
+  const close = panel.querySelector('.close');
+  let lastFocus;
+
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+  document.querySelectorAll('.js-signup').forEach(button => button.addEventListener('click', event => {
+    event.preventDefault();
+    lastFocus = button;
+    panel.classList.add('open');
+    panel.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => panel.querySelector('input').focus(), 100);
+  }));
+  function closePanel() {
+    panel.classList.remove('open');
+    panel.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (lastFocus) lastFocus.focus();
+  }
+  close.addEventListener('click', closePanel);
+  panel.addEventListener('click', event => { if (event.target === panel) closePanel(); });
+  addEventListener('keydown', event => { if (event.key === 'Escape' && panel.classList.contains('open')) closePanel(); });
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    form.style.display = 'none';
+    document.getElementById('success').style.display = 'block';
+  });
+</script>
+</body>
+</html>

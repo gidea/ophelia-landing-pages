@@ -1,0 +1,41 @@
+/* Shared iteration switcher — self-contained so it survives any page palette. */
+.iter-switcher {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 16px;
+  border-radius: 999px;
+  background: rgba(16, 17, 20, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  font: 500 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #fff;
+}
+.iter-switcher__label {
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  opacity: 0.72;
+}
+.iter-switcher__dots { display: flex; gap: 4px; }
+.iter-switcher__dot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.iter-switcher__dot:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.iter-switcher__dot.is-active { background: #fff; color: #111; }
+@media (max-width: 480px) {
+  .iter-switcher__label { display: none; }
+}
